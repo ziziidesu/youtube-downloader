@@ -60,9 +60,21 @@ app.get('/api/youtube/:youtubeId', (req, res) => {
   });
   audio.on('end', () => {
     console.log(`youtube file (${youtubeId}.wav) downloaded.`);
-
     const video = ytdl(url, { quality: 'highestvideo' })
     video.pipe(fs.createWriteStream(destFilePath + `.mp4`));
+    var starttime : number;
+    video.once('response', () => {
+      starttime = Date.now();
+    });
+    video.on('progress', (chunkLength, downloaded, total) => {
+      const percent = downloaded / total;
+      const downloadedMinutes = (Date.now() - starttime) / 1000 / 60;
+      const estimatedDownloadTime = (downloadedMinutes / percent) - downloadedMinutes;
+      process.stdout.write(`${(percent * 100).toFixed(2)}% downloaded `);
+      process.stdout.write(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)\n`);
+      process.stdout.write(`running for: ${downloadedMinutes.toFixed(2)}minutes`);
+      process.stdout.write(`, estimated time left: ${estimatedDownloadTime.toFixed(2)}minutes `);
+    });
     video.on('error', (err) => {
       console.error(err);
       res.status(400).send('download error!');
@@ -105,7 +117,6 @@ app.get('/api/youtube/:youtubeId', (req, res) => {
 
 
 });
-
 server.listen(port, () => {
   console.log(`Listening on port ${port}`);
 });
