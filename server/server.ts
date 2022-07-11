@@ -72,8 +72,7 @@ app.get('/api/youtube/:youtubeId', (req, res) => {
   
   async function videoDownload() {
     const info = await ytdl.getInfo(youtubeId);
-    let format = ytdl.chooseFormat(info.formats, { quality: 'highestvideo' });
-    const video = ytdl(url, { filter: format => format.container === 'mp4' })
+    const video = ytdl(url, { filter: format => format.container === 'mp4', quality: 'highestvideo' })
 
     video.pipe(fs.createWriteStream(destFilePath + `.mp4`));
     var starttime : number;
