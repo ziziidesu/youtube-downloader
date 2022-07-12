@@ -49,6 +49,22 @@ app.get('/api/youtube/:youtubeId', (req, res) => {
     return;
   });
 
+  audio.pipe(fs.createWriteStream(destFilePath + `.wav`));
+  var starttime : number;
+  audio.once('response', () => {
+    starttime = Date.now();
+  });
+  
+  audio.on('progress', (chunkLength, downloaded, total) => {
+    const percent = downloaded / total;
+    const downloadedMinutes = (Date.now() - starttime) / 1000 / 60;
+    const estimatedDownloadTime = (downloadedMinutes / percent) - downloadedMinutes;
+    process.stdout.write(`${(percent * 100).toFixed(2)}% downloaded `);
+    process.stdout.write(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)\n`);
+    process.stdout.write(`running for: ${downloadedMinutes.toFixed(2)}minutes`);
+    process.stdout.write(`, estimated time left: ${estimatedDownloadTime.toFixed(2)}minutes `);
+  });
+
   audio.on('end', () => {
     console.log(`youtube file (${youtubeId}.wav) downloaded.`);
     if (fileType === 'mp4') {
@@ -131,22 +147,6 @@ app.get('/api/youtube/:youtubeId', (req, res) => {
       });
     });
   }
-
-  audio.pipe(fs.createWriteStream(destFilePath + `.wav`));
-  var starttime : number;
-  audio.once('response', () => {
-    starttime = Date.now();
-  });
-  
-  audio.on('progress', (chunkLength, downloaded, total) => {
-    const percent = downloaded / total;
-    const downloadedMinutes = (Date.now() - starttime) / 1000 / 60;
-    const estimatedDownloadTime = (downloadedMinutes / percent) - downloadedMinutes;
-    process.stdout.write(`${(percent * 100).toFixed(2)}% downloaded `);
-    process.stdout.write(`(${(downloaded / 1024 / 1024).toFixed(2)}MB of ${(total / 1024 / 1024).toFixed(2)}MB)\n`);
-    process.stdout.write(`running for: ${downloadedMinutes.toFixed(2)}minutes`);
-    process.stdout.write(`, estimated time left: ${estimatedDownloadTime.toFixed(2)}minutes `);
-  });
 });
 
 async function delete_tmp(){
