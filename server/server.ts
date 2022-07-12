@@ -30,6 +30,11 @@ app.get('/api/health', (req, res) => {
 // Youtubeのダウンロード
 app.get('/api/youtube/:youtubeId', (req, res) => {
   const { youtubeId } = req.params;
+  if(!youtubeId.match(/^[a-z_A-Z0-9\-]{11}$/g)){
+    console.error(`YouTubeID validation error : ${youtubeId}`);
+    res.status(400).send('YouTubeID validation error!');
+    return;
+  }
   const fileType = (req.query.fileType || 'mp4') as 'mp4' | 'mp3';
 
   const destFilePath = path.resolve(__dirname, `./tmp/${youtubeId}`);
@@ -41,6 +46,7 @@ app.get('/api/youtube/:youtubeId', (req, res) => {
   audio.on('error', (err) => {
     console.error(err);
     res.status(400).send('download error!');
+    return;
   });
 
   audio.on('end', () => {
@@ -131,6 +137,7 @@ app.get('/api/youtube/:youtubeId', (req, res) => {
   audio.once('response', () => {
     starttime = Date.now();
   });
+  
   audio.on('progress', (chunkLength, downloaded, total) => {
     const percent = downloaded / total;
     const downloadedMinutes = (Date.now() - starttime) / 1000 / 60;
